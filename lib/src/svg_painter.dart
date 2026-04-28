@@ -8,6 +8,7 @@ import 'svg_model.dart';
 final class SvgScenePainter extends CustomPainter {
   SvgScenePainter(this.scene);
 
+  /// The parsed and flattened scene to draw.
   final SvgScene scene;
 
   @override

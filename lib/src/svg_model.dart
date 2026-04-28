@@ -5,7 +5,10 @@ import 'package:flutter/rendering.dart' show Matrix4;
 import 'path_data.dart';
 import 'svg_style.dart';
 
-/// One drawable primitive after flattening groups.
+/// One flattened drawable primitive.
+///
+/// A [SvgItem] is the end result of parsing and flattening the SVG tree
+/// (e.g. applying any `transform` on parent `<g>` nodes).
 final class SvgItem {
   SvgItem({
     required this.path,
@@ -14,13 +17,23 @@ final class SvgItem {
     required this.strokeWidth,
   });
 
+  /// Geometry in the SVG's viewBox coordinate space (after transforms).
   final Path path;
+
+  /// Fill paint, or `null` when `fill="none"`.
   final Paint? fill;
+
+  /// Stroke paint, or `null` when no stroke is specified.
   final Paint? stroke;
+
+  /// Stroke width in the same coordinate space as [path].
   final double strokeWidth;
 }
 
-/// Parsed SVG scene: [sizeHint] from width/height; [viewBox] for scaling.
+/// A parsed SVG scene: a flat list of drawables plus optional sizing metadata.
+///
+/// - [viewBox] is preferred for determining intrinsic size and scaling.
+/// - [width]/[height] are treated as hints when present.
 final class SvgScene {
   SvgScene({
     required this.items,
@@ -29,9 +42,16 @@ final class SvgScene {
     this.viewBox,
   });
 
+  /// Flattened draw operations in paint order.
   final List<SvgItem> items;
+
+  /// Optional root `width` attribute parsed to px-like units.
   final double? width;
+
+  /// Optional root `height` attribute parsed to px-like units.
   final double? height;
+
+  /// Optional root `viewBox` (x, y, width, height).
   final Rect? viewBox;
 
   /// Best effort intrinsic size from viewBox or width/height.
@@ -48,7 +68,13 @@ final class SvgScene {
 }
 
 /// Parses raw SVG/XML into a drawable [SvgScene].
-/// Supports a practical subset: `svg`, `g`, `path`, `rect`, `circle`, `ellipse`.
+///
+/// Supported subset (practical, icon-focused):
+/// - Elements: `svg`, `g`, `path`, `rect`, `circle`, `ellipse`
+/// - Attributes: `viewBox`, `width`, `height`, `fill`, `stroke`, opacity, `fill-rule`
+/// - Transforms: `matrix`, `translate`, `scale`, `rotate` (on `g`)
+///
+/// The returned scene is flattened (no retained DOM/tree).
 SvgScene parseSvgString(
   String input, {
   Color defaultColor = const Color(0xFF000000),

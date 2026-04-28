@@ -9,6 +9,10 @@ import 'svg_painter.dart';
 /// Supported subset includes `svg`, `g`, `path`, `rect`, `circle`, `ellipse`,
 /// transforms, fills, strokes, opacity, `viewBox`, and width/height hints.
 final class FfiSvg extends StatelessWidget {
+  /// Creates a widget that renders SVG from an inline string.
+  ///
+  /// If parsing fails, this widget falls back to an empty [SizedBox] using the
+  /// provided [width]/[height] (if any).
   /// Renders SVG from [source].
   const FfiSvg.string(
     this.source, {
@@ -19,6 +23,7 @@ final class FfiSvg extends StatelessWidget {
     this.alignment = Alignment.center,
     this.clipBehavior = Clip.hardEdge,
     this.color,
+    this.cacheKey,
   });
 
   /// Raw SVG/XML text.
@@ -41,12 +46,19 @@ final class FfiSvg extends StatelessWidget {
   /// Default fill color when the SVG omits explicit paint (`currentColor`).
   final Color? color;
 
+  /// Optional cache key for reusing parsed results across rebuilds.
+  ///
+  /// When null, parsing is performed on every build. When set, parsed scenes are
+  /// cached in-memory with a small, best-effort LRU policy.
+  final Object? cacheKey;
+
   @override
   Widget build(BuildContext context) {
     final SvgScene scene;
     try {
-      scene = parseSvgString(
-        source,
+      scene = _SvgSceneCache.getOrParse(
+        cacheKey: cacheKey,
+        source: source,
         defaultColor: color ?? const Color(0xFF000000),
       );
     } catch (_) {
@@ -90,5 +102,46 @@ final class FfiSvg extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+final class _SvgSceneCache {
+  static const int _maxEntries = 64;
+
+  static final Map<Object, SvgScene> _cache = <Object, SvgScene>{};
+  static final List<Object> _lru = <Object>[];
+
+  static SvgScene getOrParse({
+    required Object? cacheKey,
+    required String source,
+    required Color defaultColor,
+  }) {
+    if (cacheKey == null) {
+      return parseSvgString(source, defaultColor: defaultColor);
+    }
+
+    final hit = _cache[cacheKey];
+    if (hit != null) {
+      _touch(cacheKey);
+      return hit;
+    }
+
+    final scene = parseSvgString(source, defaultColor: defaultColor);
+    _cache[cacheKey] = scene;
+    _touch(cacheKey);
+    _evictIfNeeded();
+    return scene;
+  }
+
+  static void _touch(Object key) {
+    _lru.remove(key);
+    _lru.add(key);
+  }
+
+  static void _evictIfNeeded() {
+    while (_lru.length > _maxEntries) {
+      final oldest = _lru.removeAt(0);
+      _cache.remove(oldest);
+    }
   }
 }
