@@ -1,6 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
 import 'package:flutter_ffi_svg/flutter_ffi_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+final class _TestAssetBundle extends CachingAssetBundle {
+  _TestAssetBundle(this._assets);
+
+  final Map<String, String> _assets;
+
+  @override
+  Future<ByteData> load(String key) async {
+    final v = _assets[key];
+    if (v == null) {
+      throw FlutterError('Missing asset: $key');
+    }
+    final bytes = utf8.encode(v);
+    return ByteData.sublistView(Uint8List.fromList(bytes));
+  }
+
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async {
+    final v = _assets[key];
+    if (v == null) {
+      throw FlutterError('Missing asset: $key');
+    }
+    return v;
+  }
+}
 
 void main() {
   test('parseSvgPathData builds a closed path', () {
@@ -79,5 +106,29 @@ void main() {
         ),
       ),
     );
+  });
+
+  testWidgets('FfiSvg.asset loads from bundle and pumps', (tester) async {
+    const svg = '<svg viewBox="0 0 2 2">'
+        '<rect width="2" height="2" fill="#ff0000"/>'
+        '</svg>';
+    final bundle = _TestAssetBundle({'assets/a.svg': svg});
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DefaultAssetBundle(
+          bundle: bundle,
+          child: Scaffold(
+            body: Builder(
+              builder: (context) =>
+                  FfiSvg.asset(context, 'assets/a.svg', width: 20, height: 20),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Let the FutureBuilder complete.
+    await tester.pump();
   });
 }

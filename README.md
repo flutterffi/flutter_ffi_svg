@@ -15,7 +15,7 @@ Published by [flutterffi](https://pub.dev/publishers/flutterffi) on [pub.dev](ht
 
 ```yaml
 dependencies:
-  flutter_ffi_svg: ^1.0.0
+  flutter_ffi_svg: ^1.0.2
 ```
 
 Run `flutter pub get`.
@@ -50,6 +50,20 @@ class Demo extends StatelessWidget {
       ),
     );
   }
+}
+```
+
+Load from assets:
+
+```dart
+@override
+Widget build(BuildContext context) {
+  return FfiSvg.asset(
+    context,
+    'assets/icon.svg',
+    width: 120,
+    height: 120,
+  );
 }
 ```
 
