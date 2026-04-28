@@ -1,0 +1,14 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Dart / Flutter
+.dart_tool/
+build/
+pubspec.lock
+**/doc/api/
+
+# Misc
+.DS_Store
+*.log
