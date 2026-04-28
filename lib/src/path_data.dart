@@ -406,7 +406,10 @@ class SvgPathDataParser {
   bool _peekNum() {
     if (_i >= _src.length) return false;
     final cu = _src.codeUnitAt(_i);
-    return (cu >= 0x30 && cu <= 0x39) || _src[_i] == '.' || _src[_i] == '-' || _src[_i] == '+';
+    return (cu >= 0x30 && cu <= 0x39) ||
+        _src[_i] == '.' ||
+        _src[_i] == '-' ||
+        _src[_i] == '+';
   }
 
   double _readNum() {
