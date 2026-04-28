@@ -1,3 +1,8 @@
+## 1.0.2
+
+- Align README/metadata for pub.dev and bump version.
+- Add `FfiSvg.asset(BuildContext, ...)` convenience API for loading SVG from assets.
+
 ## 1.0.1
 
 - Add runnable `example/` app.
