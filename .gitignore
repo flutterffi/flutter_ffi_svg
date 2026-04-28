@@ -120,3 +120,6 @@ app.*.symbols
 
 # Local repo cruft
 .DS_Store
+
+# Legacy layout (package used to live here)
+/flutter_ffi_svg/
