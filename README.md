@@ -53,6 +53,14 @@ class Demo extends StatelessWidget {
 }
 ```
 
+Run the full example app in `example/`:
+
+```bash
+cd example
+flutter pub get
+flutter run
+```
+
 Parse only (no widget):
 
 ```dart
