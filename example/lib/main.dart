@@ -41,7 +41,9 @@ final class _App extends StatelessWidget {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.all(10),
@@ -53,7 +55,8 @@ final class _App extends StatelessWidget {
                         svg.trim(),
                         maxLines: 12,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontFamily: 'Menlo', fontSize: 12),
+                        style:
+                            const TextStyle(fontFamily: 'Menlo', fontSize: 12),
                       ),
                     ),
                   ],
@@ -96,4 +99,3 @@ const _arcs = '''
   <path d="M60 30 A 20 10 30 1 1 110 30" fill="none" stroke="#607D8B" stroke-width="4"/>
 </svg>
 ''';
-

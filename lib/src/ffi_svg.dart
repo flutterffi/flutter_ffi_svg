@@ -38,6 +38,7 @@ final class FfiSvg extends StatelessWidget {
   /// How to scale the intrinsic graphic inside the layout bounds.
   final BoxFit fit;
 
+  /// Alignment used by the internal [FittedBox] when applying [fit].
   final AlignmentGeometry alignment;
 
   /// Clipping applied around the scaled content.

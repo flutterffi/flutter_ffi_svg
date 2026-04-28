@@ -26,5 +26,6 @@ final class SvgScenePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant SvgScenePainter oldDelegate) => oldDelegate.scene != scene;
+  bool shouldRepaint(covariant SvgScenePainter oldDelegate) =>
+      oldDelegate.scene != scene;
 }

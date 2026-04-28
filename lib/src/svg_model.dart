@@ -10,6 +10,7 @@ import 'svg_style.dart';
 /// A [SvgItem] is the end result of parsing and flattening the SVG tree
 /// (e.g. applying any `transform` on parent `<g>` nodes).
 final class SvgItem {
+  /// Creates a flattened drawable item.
   SvgItem({
     required this.path,
     required this.fill,
@@ -35,6 +36,7 @@ final class SvgItem {
 /// - [viewBox] is preferred for determining intrinsic size and scaling.
 /// - [width]/[height] are treated as hints when present.
 final class SvgScene {
+  /// Creates a scene from already-flattened [items].
   SvgScene({
     required this.items,
     this.width,
@@ -344,7 +346,8 @@ final class _SvgFlattenParser {
     }
 
     out.add(
-      SvgItem(path: xfPath, fill: fillPaint, stroke: strokePaint, strokeWidth: sw),
+      SvgItem(
+          path: xfPath, fill: fillPaint, stroke: strokePaint, strokeWidth: sw),
     );
   }
 
@@ -358,10 +361,8 @@ final class _SvgFlattenParser {
 
   Rect? _viewBox(String? s) {
     if (s == null || s.trim().isEmpty) return null;
-    final parts = s
-        .split(RegExp(r'[\s,]+'))
-        .where((e) => e.isNotEmpty)
-        .toList();
+    final parts =
+        s.split(RegExp(r'[\s,]+')).where((e) => e.isNotEmpty).toList();
     if (parts.length != 4) return null;
     final x = double.tryParse(parts[0]) ?? 0;
     final y = double.tryParse(parts[1]) ?? 0;
@@ -393,10 +394,22 @@ final class _SvgFlattenParser {
             final f = args[5];
             m.multiply(
               Matrix4(
-                a, b, 0, 0,
-                c, d, 0, 0,
-                e, f, 1, 0,
-                0, 0, 0, 1,
+                a,
+                b,
+                0,
+                0,
+                c,
+                d,
+                0,
+                0,
+                e,
+                f,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
               ),
             );
           }
@@ -404,7 +417,8 @@ final class _SvgFlattenParser {
         case 'translate':
           if (args.isNotEmpty) {
             m.multiply(
-              Matrix4.translationValues(args[0], args.length > 1 ? args[1] : 0, 0),
+              Matrix4.translationValues(
+                  args[0], args.length > 1 ? args[1] : 0, 0),
             );
           }
           break;
