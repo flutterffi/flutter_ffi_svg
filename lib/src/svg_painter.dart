@@ -6,8 +6,10 @@ import 'svg_model.dart';
 ///
 /// Intended to be placed inside [FittedBox], [SizedBox], or layouts that give a bounded area.
 final class SvgScenePainter extends CustomPainter {
+  /// Creates a painter that draws [scene] at 1:1 in viewBox space.
   SvgScenePainter(this.scene);
 
+  /// The parsed and flattened scene to draw.
   final SvgScene scene;
 
   @override
@@ -25,5 +27,6 @@ final class SvgScenePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant SvgScenePainter oldDelegate) => oldDelegate.scene != scene;
+  bool shouldRepaint(covariant SvgScenePainter oldDelegate) =>
+      oldDelegate.scene != scene;
 }

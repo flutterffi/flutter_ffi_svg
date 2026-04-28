@@ -5,8 +5,12 @@ import 'package:flutter/rendering.dart' show Matrix4;
 import 'path_data.dart';
 import 'svg_style.dart';
 
-/// One drawable primitive after flattening groups.
+/// One flattened drawable primitive.
+///
+/// A [SvgItem] is the end result of parsing and flattening the SVG tree
+/// (e.g. applying any `transform` on parent `<g>` nodes).
 final class SvgItem {
+  /// Creates a flattened drawable item.
   SvgItem({
     required this.path,
     required this.fill,
@@ -14,14 +18,25 @@ final class SvgItem {
     required this.strokeWidth,
   });
 
+  /// Geometry in the SVG's viewBox coordinate space (after transforms).
   final Path path;
+
+  /// Fill paint, or `null` when `fill="none"`.
   final Paint? fill;
+
+  /// Stroke paint, or `null` when no stroke is specified.
   final Paint? stroke;
+
+  /// Stroke width in the same coordinate space as [path].
   final double strokeWidth;
 }
 
-/// Parsed SVG scene: [sizeHint] from width/height; [viewBox] for scaling.
+/// A parsed SVG scene: a flat list of drawables plus optional sizing metadata.
+///
+/// - [viewBox] is preferred for determining intrinsic size and scaling.
+/// - [width]/[height] are treated as hints when present.
 final class SvgScene {
+  /// Creates a scene from already-flattened [items].
   SvgScene({
     required this.items,
     this.width,
@@ -29,9 +44,16 @@ final class SvgScene {
     this.viewBox,
   });
 
+  /// Flattened draw operations in paint order.
   final List<SvgItem> items;
+
+  /// Optional root `width` attribute parsed to px-like units.
   final double? width;
+
+  /// Optional root `height` attribute parsed to px-like units.
   final double? height;
+
+  /// Optional root `viewBox` (x, y, width, height).
   final Rect? viewBox;
 
   /// Best effort intrinsic size from viewBox or width/height.
@@ -48,7 +70,13 @@ final class SvgScene {
 }
 
 /// Parses raw SVG/XML into a drawable [SvgScene].
-/// Supports a practical subset: `svg`, `g`, `path`, `rect`, `circle`, `ellipse`.
+///
+/// Supported subset (practical, icon-focused):
+/// - Elements: `svg`, `g`, `path`, `rect`, `circle`, `ellipse`
+/// - Attributes: `viewBox`, `width`, `height`, `fill`, `stroke`, opacity, `fill-rule`
+/// - Transforms: `matrix`, `translate`, `scale`, `rotate` (on `g`)
+///
+/// The returned scene is flattened (no retained DOM/tree).
 SvgScene parseSvgString(
   String input, {
   Color defaultColor = const Color(0xFF000000),
@@ -195,7 +223,11 @@ final class _SvgFlattenParser {
         _i = end + 1;
         continue;
       }
-      if (_i < _src2.length && _src2[_i] == '<' && _i + 1 < _src2.length && _src2[_i + 1] != '/' && _i + 1 < _src2.length) {
+      if (_i < _src2.length &&
+          _src2[_i] == '<' &&
+          _i + 1 < _src2.length &&
+          _src2[_i + 1] != '/' &&
+          _i + 1 < _src2.length) {
         final next = _parseOpenTag();
         if (next != null && !next.selfClosing) {
           depth++;
@@ -231,7 +263,9 @@ final class _SvgFlattenParser {
         if (rx > 0 || ry > 0) {
           final rxx = rx > 0 ? rx : ry;
           final ryy = ry > 0 ? ry : rx;
-          path.addRRect(RRect.fromRectXY(Rect.fromLTWH(x, y, w, he), rxx, ryy));
+          path.addRRect(
+            RRect.fromRectXY(Rect.fromLTWH(x, y, w, he), rxx, ryy),
+          );
         } else {
           path.addRect(Rect.fromLTWH(x, y, w, he));
         }
@@ -240,14 +274,22 @@ final class _SvgFlattenParser {
         final cx = _num(attrs['cx']);
         final cy = _num(attrs['cy']);
         final r = _num(attrs['r']);
-        path = Path()..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: r));
+        path = Path()
+          ..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: r));
         break;
       case 'ellipse':
         final cx = _num(attrs['cx']);
         final cy = _num(attrs['cy']);
         final rx = _num(attrs['rx']);
         final ry = _num(attrs['ry']);
-        path = Path()..addOval(Rect.fromCenter(center: Offset(cx, cy), width: rx * 2, height: ry * 2));
+        path = Path()
+          ..addOval(
+            Rect.fromCenter(
+              center: Offset(cx, cy),
+              width: rx * 2,
+              height: ry * 2,
+            ),
+          );
         break;
       default:
         return;
@@ -272,19 +314,24 @@ final class _SvgFlattenParser {
       var c = fillColor;
       if (fo != null) c = applyAlpha(c, fo);
       if (oo != null) c = applyAlpha(c, oo);
-      fillPaint = Paint()..color = c..style = PaintingStyle.fill;
+      fillPaint = Paint()
+        ..color = c
+        ..style = PaintingStyle.fill;
     } else if (fillAttr != null && fillAttr.trim() == 'none') {
       fillPaint = null;
     } else {
       var c = baseFill;
       if (fo != null) c = applyAlpha(c, fo);
       if (oo != null) c = applyAlpha(c, oo);
-      fillPaint = Paint()..color = c..style = PaintingStyle.fill;
+      fillPaint = Paint()
+        ..color = c
+        ..style = PaintingStyle.fill;
     }
 
     final strokeAttr = attrs['stroke'];
     final strokeColor = parseSvgPaint(strokeAttr);
-    final sw = parseLengthPx(attrs['stroke-width'], fallback: 1).clamp(0.0, 10000.0);
+    final sw =
+        parseLengthPx(attrs['stroke-width'], fallback: 1).clamp(0.0, 10000.0);
     Paint? strokePaint;
     if (strokeColor != null && sw > 0) {
       var c = strokeColor;
@@ -298,7 +345,10 @@ final class _SvgFlattenParser {
         ..strokeJoin = StrokeJoin.miter;
     }
 
-    out.add(SvgItem(path: xfPath, fill: fillPaint, stroke: strokePaint, strokeWidth: sw));
+    out.add(
+      SvgItem(
+          path: xfPath, fill: fillPaint, stroke: strokePaint, strokeWidth: sw),
+    );
   }
 
   double _num(String? s) => double.tryParse(s?.trim() ?? '') ?? 0;
@@ -311,7 +361,8 @@ final class _SvgFlattenParser {
 
   Rect? _viewBox(String? s) {
     if (s == null || s.trim().isEmpty) return null;
-    final parts = s.split(RegExp(r'[\s,]+')).where((e) => e.isNotEmpty).toList();
+    final parts =
+        s.split(RegExp(r'[\s,]+')).where((e) => e.isNotEmpty).toList();
     if (parts.length != 4) return null;
     final x = double.tryParse(parts[0]) ?? 0;
     final y = double.tryParse(parts[1]) ?? 0;
@@ -341,26 +392,45 @@ final class _SvgFlattenParser {
             final d = args[3];
             final e = args[4];
             final f = args[5];
-            m.multiply(Matrix4(
-              a, b, 0, 0,
-              c, d, 0, 0,
-              e, f, 1, 0,
-              0, 0, 0, 1,
-            ));
+            m.multiply(
+              Matrix4(
+                a,
+                b,
+                0,
+                0,
+                c,
+                d,
+                0,
+                0,
+                e,
+                f,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+              ),
+            );
           }
           break;
         case 'translate':
           if (args.isNotEmpty) {
-            m.multiply(Matrix4.translationValues(args[0], args.length > 1 ? args[1] : 0, 0));
+            m.multiply(
+              Matrix4.translationValues(
+                  args[0], args.length > 1 ? args[1] : 0, 0),
+            );
           }
           break;
         case 'scale':
           if (args.isNotEmpty) {
-            m.multiply(Matrix4.diagonal3Values(
-              args[0],
-              args.length > 1 ? args[1] : args[0],
-              1,
-            ));
+            m.multiply(
+              Matrix4.diagonal3Values(
+                args[0],
+                args.length > 1 ? args[1] : args[0],
+                1,
+              ),
+            );
           }
           break;
         case 'rotate':

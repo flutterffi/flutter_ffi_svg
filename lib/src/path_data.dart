@@ -3,7 +3,17 @@ import 'dart:ui' show Path, PathFillType;
 
 /// Parses SVG path data (`d` attribute) into a [Path].
 ///
-/// Supports: [Mm Ll Hh Vv Cc Ss Qq Tt Aa Zz].
+/// Supported commands:
+/// - `M/m` move
+/// - `L/l` line
+/// - `H/h` horizontal line
+/// - `V/v` vertical line
+/// - `C/c` cubic bezier
+/// - `S/s` smooth cubic bezier
+/// - `Q/q` quadratic bezier
+/// - `T/t` smooth quadratic bezier
+/// - `A/a` elliptical arc (approximated)
+/// - `Z/z` close
 class SvgPathDataParser {
   SvgPathDataParser(this._src);
 
@@ -406,7 +416,10 @@ class SvgPathDataParser {
   bool _peekNum() {
     if (_i >= _src.length) return false;
     final cu = _src.codeUnitAt(_i);
-    return (cu >= 0x30 && cu <= 0x39) || _src[_i] == '.' || _src[_i] == '-' || _src[_i] == '+';
+    return (cu >= 0x30 && cu <= 0x39) ||
+        _src[_i] == '.' ||
+        _src[_i] == '-' ||
+        _src[_i] == '+';
   }
 
   double _readNum() {
@@ -440,6 +453,9 @@ class SvgPathDataParser {
 }
 
 /// Parses SVG path data; optional [fillType] for fill-rule.
+///
+/// This is the main entry-point for converting an SVG `d="..."` string into a
+/// Flutter [Path].
 Path parseSvgPathData(String d, {PathFillType? fillType}) {
   final p = SvgPathDataParser(d.trim()).parse();
   if (fillType != null) {
